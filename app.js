@@ -1,8 +1,9 @@
 var SlackBot = require('slackbots');
+var request = require('request');
 
 var settings = {
 	name : 'LoreBot',
-	token : 'xoxb-76419008017-69ekAqo38HVDVw1w2Lw7qTHV'
+	token : process.env.BOT_API_KEY
 }
 // create a bot
 var bot = new SlackBot(settings);
@@ -29,7 +30,40 @@ function handleMessage(message){
 	}
 
 	function getMessage(item){
+		var slackRequestUrl = "https://slack.com/api/channels.history";
+
+		var params = {};
+		params.token = settings.token;
+		params.channel = item.channel;
+		params.latest = item.ts;
+		params.oldest = item.ts;
+		params.inclusive = 1;
+		params.pretty = 1;
+
+		request({url: slackRequestUrl, qs: params }, handleSlackRequest);
+
+		function handleSlackRequest(err, response, body){
+			if (err) {console.log(err); return;}
+
+			if (response.statusCode === 200) {
+				console.log("Request didnt fail");
+				console.log("Message is: ");
+				//console.log(response);
+				console.log(body);
+
+				body = JSON.parse(body);
+				console.log(body.latest);
+				console.log(body.messages);
+				console.log(body.messages[0].user);
+				console.log(body.messages[0].text);
+			}
+
+			
+
+		}
+
 		console.log("item resides on channel " + item.channel);
 		console.log("item timestamp is: " + item.ts);
-	}
+
+		}
 }

@@ -1,39 +1,65 @@
 var SlackBot = require('slackbots');
-var request = require('request');
+var request = require('request-promise');
 
+const slackURI = "https://slack.com/api/";
 var settings = {
 	name : 'LoreBot',
 	token : process.env.BOT_API_KEY
 }
+
 // create a bot
 var bot = new SlackBot(settings);
-
 bot.on('message', handleMessage);
-
 bot.on('start', onStart);
 
-function onStart(){
-	var params = {
-        icon_emoji: ':cat:'
-    };
 
-    // define channel, where bot exist. You can adjust it there https://my.slack.com/services 
-    bot.postMessageToChannel('general', 'meow!', params);
+function onStart(){
+	
+	getSlackEmojis()
+	.then(handleEmojiResponse)
+	.catch(handleSlackRequestError);
+
 }
 
+function getSlackEmojis(){
+	var slackRequestUrl = slackURI + "emoji.list";
+
+	//TODO: Refactor
+	var params = {};
+	params.token = settings.token;
+	params.pretty = 1;
+
+	return request({url: slackRequestUrl, qs: params});
+}
+
+function handleEmojiResponse(data){
+	var data = JSON.parse(data);
+	var emoji = data.emoji;
+	var emojisExist = 'add-lore' in emoji;
+
+	if (!emojisExist) {
+		bot.postMessageToChannel('general', 'You do not have an add-lore emoji. How do you expect me to add lore?');
+	}
+}
 
 function handleMessage(message){
 	console.log(message);
 
 	if (message.type === 'reaction_added') {
 		console.log('Reaction added to message.');
-		getReactionItem(message.item);
+		getReactionItem(message.item)
+		.then(onItemDataResponse)
+		.catch(handleSlackRequestError);
 	}
 }
 
 
 function getReactionItem(item){
-	var slackRequestUrl = "https://slack.com/api/channels.history";
+
+	console.log("item resides on channel " + item.channel);
+	console.log("item timestamp is: " + item.ts);
+
+	var slackRequestUrl = slackURI + "channels.history";
 
 	var params = {};
 	params.token = settings.token;
@@ -43,27 +69,27 @@ function getReactionItem(item){
 	params.inclusive = 1;
 	params.pretty = 1;
 
-	request({url: slackRequestUrl, qs: params }, onItemDataResponse);		
-
-	console.log("item resides on channel " + item.channel);
-	console.log("item timestamp is: " + item.ts);
+	return request({url: slackRequestUrl, qs: params });
+	
 
 }
 
+function onItemDataResponse(data){
 
-function onItemDataResponse(err, response, body){
-			if (err) {console.log(err); return;}
+	console.log("Inside onItemDataResponse");
+	console.log(data);
+	data = JSON.parse(data);
+	
+	console.log(data.latest);
+	console.log(data.messages);
+	console.log(data.messages[0].user);
+	console.log(data.messages[0].text);
+			
+}
 
-			if (response.statusCode === 200) {
-				console.log("Request didnt fail");
-				console.log("Message is: ");
-				//console.log(response);
-				console.log(body);
 
-				body = JSON.parse(body);
-				console.log(body.latest);
-				console.log(body.messages);
-				console.log(body.messages[0].user);
-				console.log(body.messages[0].text);
-			}
+function handleSlackRequestError(err){
+	console.log("There was an error and you suck");
+	console.log(err);
+	console.trace(err);
 }

@@ -21,28 +21,37 @@ function onStart(){
     bot.postMessageToChannel('general', 'meow!', params);
 }
 
+
 function handleMessage(message){
 	console.log(message);
 
 	if (message.type === 'reaction_added') {
 		console.log('Reaction added to message.');
-		getMessage(message.item);
+		getReactionItem(message.item);
 	}
+}
 
-	function getMessage(item){
-		var slackRequestUrl = "https://slack.com/api/channels.history";
 
-		var params = {};
-		params.token = settings.token;
-		params.channel = item.channel;
-		params.latest = item.ts;
-		params.oldest = item.ts;
-		params.inclusive = 1;
-		params.pretty = 1;
+function getReactionItem(item){
+	var slackRequestUrl = "https://slack.com/api/channels.history";
 
-		request({url: slackRequestUrl, qs: params }, handleSlackRequest);
+	var params = {};
+	params.token = settings.token;
+	params.channel = item.channel;
+	params.latest = item.ts;
+	params.oldest = item.ts;
+	params.inclusive = 1;
+	params.pretty = 1;
 
-		function handleSlackRequest(err, response, body){
+	request({url: slackRequestUrl, qs: params }, onItemDataResponse);		
+
+	console.log("item resides on channel " + item.channel);
+	console.log("item timestamp is: " + item.ts);
+
+}
+
+
+function onItemDataResponse(err, response, body){
 			if (err) {console.log(err); return;}
 
 			if (response.statusCode === 200) {
@@ -57,13 +66,4 @@ function handleMessage(message){
 				console.log(body.messages[0].user);
 				console.log(body.messages[0].text);
 			}
-
-			
-
-		}
-
-		console.log("item resides on channel " + item.channel);
-		console.log("item timestamp is: " + item.ts);
-
-		}
 }

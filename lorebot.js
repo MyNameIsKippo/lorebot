@@ -24,10 +24,13 @@ EMOJI STUFF
 
 
 function CheckForLoreEmoji(){
-	getSlackEmojis().then(handleEmojiResponse).then(handleLoreEmojiResponse);
+	getSlackEmojiList()
+		.then(DoesAddLoreExist)
+		.then(handleAddLoreExistance)
+		.catch(handleSlackRequestError);
 }
 
-function getSlackEmojis(){
+function getSlackEmojiList(){
 	var slackRequestUrl = slackURI + "emoji.list";
 	var params = getDefaultSlackParams();
 	
@@ -35,14 +38,14 @@ function getSlackEmojis(){
 }
 
 
-function handleEmojiResponse(data){
+function DoesAddLoreExist(data){
 	console.log(data);
 	var data = JSON.parse(data);
 	var emoji = data.emoji;
 	return 'add-lore' in emoji;	
 }
 
-function handleLoreEmojiResponse(emojisExist){
+function handleAddLoreExistance(emojisExist){
 		if (!emojisExist) {
 		self.bot.postMessageToChannel('general', 'You do not have a lore emoji. How do you expect me to add lore?');
 	}
@@ -56,18 +59,18 @@ MESSAGE STUFF
 */
 
 function handleMessageStream(message){
-	console.log(message);
 
 	if (message.type === 'reaction_added') {
-		console.log('Reaction added to message.');
-		getReactionItem(message.item)
-		.then(onItemDataResponse)
-		.catch(handleSlackRequestError);
+
+		getSlackMessage(message.item)
+			.then(handleSlackMessage)
+			.catch(handleSlackRequestError);
+
 	}
 }
 
 
-function getReactionItem(item){
+function getSlackMessage(item){
 
 	var slackRequestUrl = slackURI + "channels.history";
 	var params = getDefaultSlackParams();
@@ -79,8 +82,9 @@ function getReactionItem(item){
 	return request({url: slackRequestUrl, qs: params });
 }
 
-function onItemDataResponse(data){
-	data = JSON.parse(data);			
+function handleSlackMessage(data){
+	data = JSON.parse(data);
+	//Do Stuff			
 }
 
 

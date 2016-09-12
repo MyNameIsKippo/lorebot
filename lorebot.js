@@ -83,6 +83,49 @@ function handleMessageStream(message){
 			.then(saveLoreToDatabase)
 			.catch(handleSlackRequestError);
 	}
+
+	if (message.reaction === 'trunksme') {
+
+
+		var slackMessage = getSlackMessage(message.item)
+			.then(handleSlackMessage);
+
+		var user = getSlackUser(message.user);
+
+
+		Promise.all([slackMessage,user])
+			.then(trunksifyLore)
+			.then(echoTrunksifiedLore)
+			.catch(handleSlackRequestError);
+	}
+}
+
+function trunksifyLore(data){
+	console.log("Inside Trunksify!!!!");
+	console.log(data);
+	var lore = data[0];
+	var userData = JSON.parse(data[1]);
+
+	if (lore.author === null)
+		return;
+
+	var trunksifiedLore = "";
+	lore.text = lore.text.replace(/"/g, "'");
+	//LOL Javascript.
+	var loreDate = new Date(lore.timestamp.split(".")[0] * 1000);
+
+	trunksifiedLore += "$ add-lore \" [{0}] {2} - {1} \"";
+	//TODO: make it so time is given in a less dumb way.
+	trunksifiedLore = trunksifiedLore.format(userData.user.name, lore.text, loreDate.toTimeString().split(" ")[0]);
+
+	return trunksifiedLore;
+
+}
+
+function echoTrunksifiedLore(lore){
+	console.log("Inside Echo");
+	console.log(lore);
+	self.bot.postMessageToChannel('general', lore);
 }
 
 
@@ -94,6 +137,15 @@ function getSlackMessage(item){
 	params.latest = item.ts;
 	params.oldest = item.ts;
 	params.inclusive = 1;
+
+	return request({url: slackRequestUrl, qs: params });
+}
+
+function getSlackUser(userid){
+	console.log("Looking for user " + userid);
+	var slackRequestUrl = slackURI + "users.info";
+	var params = getDefaultSlackParams();
+	params.user = userid;
 
 	return request({url: slackRequestUrl, qs: params });
 }
@@ -135,7 +187,7 @@ GENERIC STUFF
 
 
 function handleSlackRequestError(err){
-	
+
 	console.log("There was an error and you suck");
 	console.log(err);
 	console.trace(err);
@@ -146,6 +198,20 @@ function getDefaultSlackParams(token){
 		token : self.token,
 		pretty : 1
 	}
+}
+
+
+if (!String.prototype.format) {
+    String.prototype.format = function() {
+        var str = this.toString();
+        if (!arguments.length)
+            return str;
+        var args = typeof arguments[0],
+            args = (("string" == args || "number" == args) ? arguments : arguments[0]);
+        for (arg in args)
+            str = str.replace(RegExp("\\{" + arg + "\\}", "gi"), args[arg]);
+        return str;
+    }
 }
 
 

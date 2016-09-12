@@ -86,7 +86,7 @@ function handleMessageStream(message){
 
 	if (message.reaction === 'trunksme') {
 
-
+		var channel = message.item.channel;
 		var slackMessage = getSlackMessage(message.item)
 			.then(handleSlackMessage);
 
@@ -125,7 +125,7 @@ function trunksifyLore(data){
 function echoTrunksifiedLore(lore){
 	console.log("Inside Echo");
 	console.log(lore);
-	self.bot.postMessageToChannel('general', lore);
+	self.bot.postMessageToChannel(channel, lore);
 }
 
 

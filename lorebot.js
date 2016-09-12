@@ -91,7 +91,7 @@ function handleMessageStream(message){
 		var slackMessage = getSlackMessage(message.item)
 			.then(handleSlackMessage);
 
-		var user = getSlackUser(message.user);
+		var user = getSlackUser(message.item_user);
 
 
 		Promise.all([slackMessage,user])

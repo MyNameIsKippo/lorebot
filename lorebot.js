@@ -114,9 +114,9 @@ function trunksifyLore(data){
 	//LOL Javascript.
 	var loreDate = new Date(lore.timestamp.split(".")[0] * 1000);
 
-	trunksifiedLore += "$ add-lore \" [{0}] {2} - {1} \"";
+	trunksifiedLore += "$ add-lore \"{2} \n [{0}] - {1} \"";
 	//TODO: make it so time is given in a less dumb way.
-	trunksifiedLore = trunksifiedLore.format(userData.user.name, lore.text, loreDate.toTimeString().split(" ")[0]);
+	trunksifiedLore = trunksifiedLore.format(userData.user.name, lore.text, loreDate.toString());
 
 	return trunksifiedLore;
 

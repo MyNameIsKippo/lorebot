@@ -14,7 +14,6 @@ BOT EVENT STUFF
 
 function onStart(){
 	CheckForLoreEmoji();
-	CheckForDatabase();
 }
 
 
@@ -165,7 +164,7 @@ function normalizeLore(lore, message){
 }
 
 function saveLoreToDatabase(lore){
-
+	//TODO: Do something.
 }
 
 /*
@@ -228,11 +227,6 @@ function init(){
 	var addLoreSubscription = addLoreMessages.subscribe(handleAddLoreReaction, handleSlackRequestError);
 }
 
-function CheckForDatabase(){
-	if (loreData.checkLoreSchema() === false) {
-		self.bot.postMessageToChannel('general', 'Seems like I dont have a place to save lore!');
-	}
-}
 
 
 exports.setup = setup;

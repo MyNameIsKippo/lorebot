@@ -111,13 +111,11 @@ function trunksifyLore(data){
 		return;
 
 	var trunksifiedLore = "";
-	lore.text = lore.text.replace(/'/g, "\\'");
-	//LOL Javascript. Actually I think the add-lore does this automatically.
-	var loreDate = new Date(lore.timestamp.split(".")[0] * 1000);
+	lore.text = lore.text.replace(/"/g, '\\"');
+	lore.text = lore.text.replace(/`/g, '\\`');
+	lore.text = lore.text.replace(/\$/g, '\\$');
 
 	trunksifiedLore += "$ loredb add \"{0}\" \"{1}\"";
-
-	//TODO: make it so time is given in a less dumb way.
 	trunksifiedLore = trunksifiedLore.format(userData.user.name, lore.text);
 
 	return trunksifiedLore;

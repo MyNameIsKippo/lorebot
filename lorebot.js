@@ -115,7 +115,7 @@ function trunksifyLore(data){
 	lore.text = lore.text.replace(/`/g, '\\`');
 	lore.text = lore.text.replace(/\$/g, '\\$');
 
-	trunksifiedLore += "$ loredb add \"{0}\" \"{1}\"";
+	trunksifiedLore += "$- loredb add \"{0}\" \"{1}\"";
 	trunksifiedLore = trunksifiedLore.format(userData.user.name, lore.text);
 
 	return trunksifiedLore;

@@ -1,4 +1,5 @@
 var request = require('request-promise');
+var Rx = require('rx');
 var SlackBot = require('slackbots');
 var loreData = require('./lorebot-data');
 const slackURI = "https://slack.com/api/";
@@ -12,9 +13,7 @@ BOT EVENT STUFF
 */
 
 function onStart(){
-
 	CheckForLoreEmoji();
-	CheckForDatabase();
 }
 
 
@@ -34,7 +33,6 @@ function CheckForLoreEmoji(){
 }
 
 function getSlackEmojiList(){
-
 	var slackRequestUrl = slackURI + "emoji.list";
 	var params = getDefaultSlackParams();
 
@@ -43,8 +41,6 @@ function getSlackEmojiList(){
 
 
 function CheckIfAddLoreExists(data){
-
-	console.log(data);
 	var data = JSON.parse(data);
 	var emoji = data.emoji;
 
@@ -52,7 +48,6 @@ function CheckIfAddLoreExists(data){
 }
 
 function handleAddLoreExistance(emojisExist){
-
 	if (!emojisExist) {
 		self.bot.postMessageToChannel('general', 'You do not have a lore emoji. How do you expect me to add lore?');
 	} else{
@@ -67,26 +62,11 @@ MESSAGE STUFF
 
 */
 
-function handleMessageStream(message){
 
-	if (message.type !== 'reaction_added')
-		return;
-
-	console.log(message);//TODO: Only log first time add-lore is done.
-
-	if (message.reaction === 'add-lore') {
-		getSlackMessage(message.item)
-			.then(handleSlackMessage)
-			.then(function(lore, message){
-				normalizeLore(lore, message);
-			})
-			.then(saveLoreToDatabase)
-			.catch(handleSlackRequestError);
-	}
-
-	if (message.reaction === 'trunksme') {
-
+function handleTrunksmeReaction(message){
 		self.channel = message.item.channel;
+
+		console.log("Inside HandleTrunksMe. Message is " + message)
 
 		var slackMessage = getSlackMessage(message.item)
 			.then(handleSlackMessage);
@@ -98,12 +78,21 @@ function handleMessageStream(message){
 			.then(trunksifyLore)
 			.then(echoTrunksifiedLore)
 			.catch(handleSlackRequestError);
-	}
+}
+
+function handleAddLoreReaction(message){
+
+	var slackMessage = message;
+	getSlackMessage(message.item)
+			.then(handleSlackMessage)
+			.then(function(lore){
+				normalizeLore(lore, slackMessage);
+			})
+			.then(saveLoreToDatabase)
+			.catch(handleSlackRequestError);
 }
 
 function trunksifyLore(data){
-	console.log("Inside Trunksify!!!!");
-	console.log(data);
 	var lore = data[0];
 	var userData = JSON.parse(data[1]);
 
@@ -123,15 +112,8 @@ function trunksifyLore(data){
 }
 
 function echoTrunksifiedLore(lore){
-	console.log("Inside Echo");
-	console.log(lore);
-
-	console.log(self.channel);
 
 	self.bot.postMessage(self.channel, lore)
-	.then(function(){
-		console.log("Whoooo!");
-	})
 	.catch(handleSlackRequestError);
 }
 
@@ -158,7 +140,7 @@ function getSlackUser(userid){
 }
 
 function handleSlackMessage(data){
-	//console.log(data);
+
 	data = JSON.parse(data);
 	console.log(data.messages[0]);
 	originalMessage = data.messages[0];
@@ -167,9 +149,6 @@ function handleSlackMessage(data){
 	fullLore.author = originalMessage.user;
 	fullLore.text = originalMessage.text;
 	fullLore.timestamp = originalMessage.ts;
-
-	console.log("Full Lore is: ");
-	console.log(fullLore);
 
 	return fullLore;			
 }
@@ -183,7 +162,7 @@ function normalizeLore(lore, message){
 }
 
 function saveLoreToDatabase(lore){
-
+	//TODO: Do something.
 }
 
 /*
@@ -230,17 +209,22 @@ INIT STUFF
 
 function setup(settings){
 	self.token = settings.token;
-
 	self.bot = new SlackBot(settings);
-	self.bot.on('message', handleMessageStream);
 	self.bot.on('start', onStart);
+
+	init();
 }
 
-function CheckForDatabase(){
-	if (loreData.checkLoreSchema() === false) {
-		self.bot.postMessageToChannel('general', 'Seems like I dont have a place to save lore!');
-	}
+function init(){
+	var messageSource = Rx.Observable.fromEvent(self.bot, 'message');
+	var reactionAddedMessages = messageSource.filter(x => x.type === 'reaction_added');
+	var trunksmeMessages = reactionAddedMessages.filter(x => x.reaction === 'trunksme');
+	var addLoreMessages = reactionAddedMessages.filter(x => x.reaction === 'add-lore');
+
+	var trunksmeSubscription = trunksmeMessages.subscribe(handleTrunksmeReaction, handleSlackRequestError);
+	var addLoreSubscription = addLoreMessages.subscribe(handleAddLoreReaction, handleSlackRequestError);
 }
+
 
 
 exports.setup = setup;

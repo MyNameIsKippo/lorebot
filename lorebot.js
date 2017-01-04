@@ -7,7 +7,7 @@ var self = this;
 self.bot = null;
 /*
 
-BOT EVENT STUFF 
+BOT EVENT STUFF
 
 */
 
@@ -48,7 +48,7 @@ function CheckIfAddLoreExists(data){
 	var data = JSON.parse(data);
 	var emoji = data.emoji;
 
-	return 'add-lore' in emoji;	
+	return 'add-lore' in emoji;
 }
 
 function handleAddLoreExistance(emojisExist){
@@ -114,6 +114,9 @@ function trunksifyLore(data){
 	lore.text = lore.text.replace(/"/g, '\\"');
 	lore.text = lore.text.replace(/`/g, '\\`');
 	lore.text = lore.text.replace(/\$/g, '\\$');
+	// Replace single and double smart quotes
+	lore.text = lore.text.replace(/[\u2018\u2019]/g, "'");
+  	lore.text = lore.text.replace(/[\u201C\u201D]/g, '"');
 
 	trunksifiedLore += "$- loredb add \"{0}\" \"{1}\"";
 	trunksifiedLore = trunksifiedLore.format(userData.user.name, lore.text);
@@ -171,7 +174,7 @@ function handleSlackMessage(data){
 	console.log("Full Lore is: ");
 	console.log(fullLore);
 
-	return fullLore;			
+	return fullLore;
 }
 
 function normalizeLore(lore, message){
@@ -224,7 +227,7 @@ if (!String.prototype.format) {
 
 /*
 
-INIT STUFF 
+INIT STUFF
 
 */
 
